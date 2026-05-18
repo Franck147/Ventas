@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:qjcmabdwnereddqijhmo.supabase.co)",
+      "PowerShell($env:PATH = $env:PATH + \";$env:USERPROFILE\\\\.dotnet\\\\tools\"; Set-Location \"d:\\\\adler\\\\proyecto1\"; dotnet ef database update --project SalesSuite.Infrastructure --startup-project SalesSuite.Web 2>&1)",
+      "PowerShell([System.IO.Directory]::GetFiles\\(\"d:\\\\adler\\\\proyecto1\"\\) | ForEach-Object { $_ })",
+      "Bash(timeout 15 dotnet run --project SalesSuite.Web --launch-profile http)",
+      "Bash(dotnet build *)",
+      "PowerShell(Stop-Process -Id 25692 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Name \"MSBuild\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "PowerShell(taskkill /F /IM \"dotnet.exe\" /T 2>&1)",
+      "PowerShell(Get-Process -Name \"dotnet\" -ErrorAction SilentlyContinue)",
+      "Bash(dotnet run *)",
+      "Bash(pkill -f \"SalesSuite.Web\")",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}

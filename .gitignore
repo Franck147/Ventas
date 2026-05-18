@@ -1,0 +1,31 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+
+## Secretos - NUNCA subir al repositorio
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+## EF Core migrations (conservar en repo)
+# !**/Migrations/
+
+## Archivos temporales del proyecto
+migration_inicial.sql
+seed_data.sql
+TestConexion/
+
+## Logs
+*.log
+logs/
+
+## dotnet tools
+.config/dotnet-tools.json
+
+## NuGet
+*.nupkg
+packages/

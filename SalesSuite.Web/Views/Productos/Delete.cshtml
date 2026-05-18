@@ -1,0 +1,39 @@
+@model SalesSuite.Web.DTOs.ProductoDTO
+@{
+    ViewData["Title"] = "Eliminar Producto";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-trash me-2"></i>Confirmar Eliminación</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    ¿Está seguro de eliminar el siguiente producto? Esta acción no se puede deshacer.
+                </div>
+                <dl class="row">
+                    <dt class="col-sm-4">Nombre</dt>
+                    <dd class="col-sm-8">@Model.Nombre</dd>
+                    <dt class="col-sm-4">Código de Barras</dt>
+                    <dd class="col-sm-8">@(Model.CodigoBarras ?? "—")</dd>
+                    <dt class="col-sm-4">Precio</dt>
+                    <dd class="col-sm-8">S/. @Model.Precio.ToString("N2")</dd>
+                    <dt class="col-sm-4">Stock actual</dt>
+                    <dd class="col-sm-8">@Model.Stock unidades</dd>
+                </dl>
+                <form asp-action="Delete" method="post" class="d-flex gap-2">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Sí, eliminar
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancelar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

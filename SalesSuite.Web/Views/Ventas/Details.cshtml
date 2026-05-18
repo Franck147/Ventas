@@ -1,0 +1,65 @@
+@model SalesSuite.Web.DTOs.VentaDetalleDTO
+@{ ViewData["Title"] = $"Venta #{Model.Id}"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between">
+                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Venta #@Model.Id</h5>
+                <small>@Model.FechaVenta.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+            </div>
+            <div class="card-body">
+                <!-- Datos del cliente -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted text-uppercase small mb-1">Cliente</h6>
+                        <p class="mb-0 fw-semibold">@Model.Cliente.NombreCompleto</p>
+                        <small class="text-muted">Doc: @Model.Cliente.DocumentoIdentidad</small>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h6 class="text-muted text-uppercase small mb-1">Total de Venta</h6>
+                        <h3 class="text-success mb-0">S/. @Model.Total.ToString("N2")</h3>
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- Líneas de detalle -->
+                <table class="table table-sm table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Precio Unit.</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Detalles)
+                        {
+                            <tr>
+                                <td>@d.ProductoNombre</td>
+                                <td class="text-center">@d.Cantidad</td>
+                                <td class="text-end">S/. @d.PrecioUnitario.ToString("N2")</td>
+                                <td class="text-end fw-semibold">S/. @d.Subtotal.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">TOTAL</td>
+                            <td class="text-end fw-bold text-success fs-5">
+                                S/. @Model.Total.ToString("N2")
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="card-footer">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Volver al listado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

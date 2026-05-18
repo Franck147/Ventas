@@ -1,0 +1,300 @@
+@{
+    ViewData["Title"] = "Nueva Venta";
+    var clientes  = ViewBag.Clientes  as IEnumerable<SalesSuite.Web.DTOs.ClienteDTO>  ?? [];
+    var productos = ViewBag.Productos as IEnumerable<SalesSuite.Web.DTOs.ProductoDTO> ?? [];
+}
+
+<h2 class="mb-4"><i class="bi bi-cart-plus me-2"></i>Nueva Venta</h2>
+
+<div class="row">
+    <!-- ── Panel izquierdo: selección de cliente y producto ────────────────── -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-secondary text-white">
+                <i class="bi bi-person-circle me-1"></i> Cliente
+            </div>
+            <div class="card-body">
+                <select id="selectCliente" class="form-select">
+                    <option value="">-- Seleccionar cliente --</option>
+                    @foreach (var c in clientes)
+                    {
+                        <option value="@c.Id">@c.NombreCompleto — @c.DocumentoIdentidad</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <i class="bi bi-box-seam me-1"></i> Agregar Producto
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="form-label small text-muted">Producto</label>
+                    <select id="selectProducto" class="form-select">
+                        <option value="">-- Seleccionar producto --</option>
+                        @foreach (var p in productos)
+                        {
+                            <option value="@p.Id"
+                                    data-nombre="@p.Nombre"
+                                    data-precio="@p.Precio"
+                                    data-stock="@p.Stock">
+                                @p.Nombre — S/. @p.Precio.ToString("N2") (Stock: @p.Stock)
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Cantidad</label>
+                    <input type="number" id="inputCantidad" class="form-control"
+                           min="1" value="1" />
+                    <div id="msgStock" class="text-danger small mt-1 d-none"></div>
+                </div>
+                <button type="button" id="btnAgregar" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-circle me-1"></i> Agregar al Carrito
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Panel derecho: carrito ─────────────────────────────────────────── -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between">
+                <span><i class="bi bi-cart3 me-1"></i> Carrito</span>
+                <span id="totalLabel" class="fw-bold text-success">S/. 0.00</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0" id="tablaCarrito">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center" style="width:110px">Cantidad</th>
+                            <th class="text-end">Precio Unit.</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-center" style="width:50px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoCarrito">
+                        <tr id="filaVacia">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                El carrito está vacío. Agrega productos desde el panel izquierdo.
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <td colspan="3" class="text-end fw-bold">TOTAL</td>
+                            <td class="text-end fw-bold text-success fs-5" id="totalFooter">S/. 0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Cancelar
+                </a>
+                <button type="button" id="btnConfirmar" class="btn btn-success" disabled>
+                    <i class="bi bi-check-circle me-1"></i> Confirmar Venta
+                </button>
+            </div>
+        </div>
+
+        <!-- Alerta de error del servidor -->
+        <div id="alertaError" class="alert alert-danger mt-3 d-none" role="alert"></div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+/**
+ * Gestión del carrito de venta con JavaScript puro (Vanilla JS).
+ * Toda la lógica de UI (agregar, quitar, recalcular) ocurre en el cliente.
+ * La validación real de stock y precios siempre se hace en el servidor.
+ */
+
+// Mapa en memoria: productoId → { nombre, precio, cantidad, stockDisponible }
+const carrito = new Map();
+
+const selectProducto = document.getElementById('selectProducto');
+const inputCantidad  = document.getElementById('inputCantidad');
+const cuerpoCarrito  = document.getElementById('cuerpoCarrito');
+const filaVacia      = document.getElementById('filaVacia');
+const msgStock       = document.getElementById('msgStock');
+const btnConfirmar   = document.getElementById('btnConfirmar');
+const alertaError    = document.getElementById('alertaError');
+
+// ── Agregar producto al carrito ────────────────────────────────────────────────
+document.getElementById('btnAgregar').addEventListener('click', () => {
+    const opcion    = selectProducto.selectedOptions[0];
+    const cantidad  = parseInt(inputCantidad.value, 10);
+
+    if (!opcion || !opcion.value) {
+        alert('Selecciona un producto antes de agregar.');
+        return;
+    }
+
+    const id      = parseInt(opcion.value, 10);
+    const nombre  = opcion.dataset.nombre;
+    const precio  = parseFloat(opcion.dataset.precio);
+    const stock   = parseInt(opcion.dataset.stock, 10);
+
+    // Calcular cantidad ya en carrito para este producto
+    const enCarrito = carrito.has(id) ? carrito.get(id).cantidad : 0;
+    const totalSolicitado = enCarrito + cantidad;
+
+    // Validación de stock en UI (el servidor también lo valida)
+    if (totalSolicitado > stock) {
+        msgStock.textContent = `Stock insuficiente. Disponible: ${stock}, ya en carrito: ${enCarrito}.`;
+        msgStock.classList.remove('d-none');
+        return;
+    }
+    msgStock.classList.add('d-none');
+
+    if (carrito.has(id)) {
+        carrito.get(id).cantidad = totalSolicitado;
+    } else {
+        carrito.set(id, { nombre, precio, cantidad, stock });
+    }
+
+    renderCarrito();
+    selectProducto.value = '';
+    inputCantidad.value  = 1;
+});
+
+// ── Eliminar producto del carrito ─────────────────────────────────────────────
+cuerpoCarrito.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-eliminar]');
+    if (!btn) return;
+    carrito.delete(parseInt(btn.dataset.eliminar, 10));
+    renderCarrito();
+});
+
+// ── Actualizar cantidad desde la tabla ────────────────────────────────────────
+cuerpoCarrito.addEventListener('change', (e) => {
+    const input = e.target.closest('[data-cantidad]');
+    if (!input) return;
+
+    const id       = parseInt(input.dataset.cantidad, 10);
+    const item     = carrito.get(id);
+    const nuevaCant = parseInt(input.value, 10);
+
+    if (!item || isNaN(nuevaCant) || nuevaCant < 1) {
+        input.value = item?.cantidad ?? 1;
+        return;
+    }
+    if (nuevaCant > item.stock) {
+        alert(`Stock máximo disponible: ${item.stock}`);
+        input.value = item.cantidad;
+        return;
+    }
+
+    item.cantidad = nuevaCant;
+    renderCarrito();
+});
+
+// ── Renderizar la tabla del carrito ───────────────────────────────────────────
+function renderCarrito() {
+    // Limpiar filas existentes (excepto filaVacia)
+    cuerpoCarrito.querySelectorAll('tr:not(#filaVacia)').forEach(r => r.remove());
+
+    if (carrito.size === 0) {
+        filaVacia.classList.remove('d-none');
+        actualizarTotal(0);
+        btnConfirmar.disabled = true;
+        return;
+    }
+
+    filaVacia.classList.add('d-none');
+    let total = 0;
+
+    carrito.forEach((item, id) => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td>${item.nombre}</td>
+            <td class="text-center">
+                <input type="number" class="form-control form-control-sm text-center"
+                       style="width:75px; margin:auto"
+                       min="1" max="${item.stock}" value="${item.cantidad}"
+                       data-cantidad="${id}" />
+            </td>
+            <td class="text-end">S/. ${item.precio.toFixed(2)}</td>
+            <td class="text-end fw-semibold">S/. ${subtotal.toFixed(2)}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger" data-eliminar="${id}" title="Quitar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </td>`;
+        cuerpoCarrito.appendChild(fila);
+    });
+
+    actualizarTotal(total);
+    btnConfirmar.disabled = false;
+}
+
+function actualizarTotal(total) {
+    const txt = `S/. ${total.toFixed(2)}`;
+    document.getElementById('totalLabel').textContent  = txt;
+    document.getElementById('totalFooter').textContent = txt;
+}
+
+// ── Confirmar venta (AJAX POST) ────────────────────────────────────────────────
+document.getElementById('btnConfirmar').addEventListener('click', async () => {
+    const clienteId = parseInt(document.getElementById('selectCliente').value, 10);
+
+    if (!clienteId) {
+        alert('Debes seleccionar un cliente antes de confirmar la venta.');
+        return;
+    }
+    if (carrito.size === 0) {
+        alert('El carrito está vacío.');
+        return;
+    }
+
+    const payload = {
+        clienteId,
+        items: [...carrito.entries()].map(([productoId, item]) => ({
+            productoId,
+            cantidad: item.cantidad
+        }))
+    };
+
+    btnConfirmar.disabled = true;
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Procesando...';
+    alertaError.classList.add('d-none');
+
+    try {
+        const resp = await fetch('/Ventas/Create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Antiforgery token se omite en endpoints [FromBody]; asegúrate de
+                // configurar la excepción en Program.cs si es necesario.
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+
+        if (resp.ok) {
+            // Redirige al detalle de la venta recién creada.
+            window.location.href = `/Ventas/Details/${data.ventaId}`;
+        } else {
+            alertaError.textContent = data.error ?? 'Error al procesar la venta.';
+            alertaError.classList.remove('d-none');
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar Venta';
+        }
+    } catch {
+        alertaError.textContent = 'Error de red. Verifica tu conexión e intenta de nuevo.';
+        alertaError.classList.remove('d-none');
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar Venta';
+    }
+});
+</script>
+}

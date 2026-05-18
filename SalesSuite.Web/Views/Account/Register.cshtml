@@ -1,0 +1,60 @@
+@model SalesSuite.Web.DTOs.RegisterViewModel
+@{ ViewData["Title"] = "Crear Cuenta"; Layout = "_Layout"; }
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-bag-check-fill text-success me-2"></i>SalesSuite
+                </h4>
+                <small class="text-muted">Crea tu cuenta de acceso</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" type="email"
+                                   placeholder="correo@ejemplo.com" autofocus />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input asp-for="Password" class="form-control" type="password"
+                                   placeholder="Mínimo 6 caracteres" />
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="ConfirmPassword" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input asp-for="ConfirmPassword" class="form-control" type="password"
+                                   placeholder="Repite la contraseña" />
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-person-plus me-1"></i> Crear Cuenta
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-center text-muted">
+                ¿Ya tienes cuenta?
+                <a asp-action="Login" class="text-decoration-none">Inicia sesión</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

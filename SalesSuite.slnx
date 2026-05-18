@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SalesSuite.Domain/SalesSuite.Domain.csproj" />
+  <Project Path="SalesSuite.Infrastructure/SalesSuite.Infrastructure.csproj" />
+  <Project Path="SalesSuite.Tests/SalesSuite.Tests.csproj" />
+  <Project Path="SalesSuite.Web/SalesSuite.Web.csproj" />
+</Solution>
